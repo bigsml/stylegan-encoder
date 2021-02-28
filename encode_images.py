@@ -13,6 +13,10 @@ from encoder.perceptual_model import PerceptualModel, load_images
 #from tensorflow.keras.models import load_model
 from keras.models import load_model
 from keras.applications.resnet50 import preprocess_input
+import tensorflow as tf
+
+config = tf.ConfigProto() 
+config.gpu_options.allow_growth = True
 
 def split_to_batches(l, n):
     for i in range(0, len(l), n):
@@ -112,7 +116,9 @@ def main():
 
     # Initialize generator and perceptual model
     tflib.init_tf()
-    with dnnlib.util.open_url(args.model_url, cache_dir=config.cache_dir) as f:
+    file = '/data/datasets/models/stylegan/karras2019stylegan-ffhq-1024x1024.pkl'
+    #with dnnlib.util.open_url(args.model_url, cache_dir=config.cache_dir) as f:
+    with open(file, 'rb') as f:
         generator_network, discriminator_network, Gs_network = pickle.load(f)
 
     generator = Generator(Gs_network, args.batch_size, clipping_threshold=args.clipping_threshold, tiled_dlatent=args.tile_dlatents, model_res=args.model_res, randomize_noise=args.randomize_noise)
@@ -121,7 +127,9 @@ def main():
 
     perc_model = None
     if (args.use_lpips_loss > 0.00000001):
-        with dnnlib.util.open_url('https://drive.google.com/uc?id=1N2-m9qszOeVC9Tq77WxsLnuWwOedQiD2', cache_dir=config.cache_dir) as f:
+        file = '/data/datasets/models/stylegan/vgg16_zhang_perceptual.pkl'
+        # with dnnlib.util.open_url('https://drive.google.com/uc?id=1N2-m9qszOeVC9Tq77WxsLnuWwOedQiD2', cache_dir=config.cache_dir) as f:
+        with open(file, 'rb') as f:
             perc_model =  pickle.load(f)
     perceptual_model = PerceptualModel(args, perc_model=perc_model, batch_size=args.batch_size)
     perceptual_model.build_perceptual_model(generator, discriminator_network)
